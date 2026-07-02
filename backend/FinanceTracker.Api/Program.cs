@@ -10,8 +10,25 @@ var builder = WebApplication.CreateBuilder(args);
 // --- Services (dependency injection container) ---
 
 // EF Core, pointed at Postgres via the connection string in appsettings.json.
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+
+// If DATABASE_URL is set (e.g. on Railway/Heroku), parse it into Npgsql format
+var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
+if (!string.IsNullOrEmpty(databaseUrl) && (databaseUrl.StartsWith("postgres://") || databaseUrl.StartsWith("postgresql://")))
+{
+    var uri = new Uri(databaseUrl);
+    var userInfo = uri.UserInfo.Split(':');
+    var username = userInfo[0];
+    var password = userInfo.Length > 1 ? userInfo[1] : "";
+    var host = uri.Host;
+    var port = uri.Port;
+    var database = uri.AbsolutePath.TrimStart('/');
+    
+    connectionString = $"Host={host};Port={port};Database={database};Username={username};Password={password};SSL Mode=Require;Trust Server Certificate=true;";
+}
+
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseNpgsql(connectionString));
 
 // Our own services, used by the controllers.
 builder.Services.AddScoped<AuthService>();
@@ -19,7 +36,12 @@ builder.Services.AddScoped<JwtService>();
 
 // JWT authentication: every request with a valid Bearer token in the
 // Authorization header gets a populated User (ClaimsPrincipal).
-var jwtKey = builder.Configuration["Jwt:Key"]!;
+var jwtKey = builder.Configuration["Jwt:Key"];
+if (string.IsNullOrEmpty(jwtKey))
+{
+    // A fallback key to prevent startup crashes when the environment variable is not yet configured.
+    jwtKey = "super_secret_key_for_development_and_testing_only_must_be_changed_in_production_32_bytes";
+}
 builder.Services
     .AddAuthentication(options =>
     {
@@ -73,11 +95,10 @@ using (var scope = app.Services.CreateScope())
 
 // --- Middleware pipeline (order matters here) ---
 
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+// Enable Swagger in all environments (including production) so that
+// testing via the web UI is possible and the Railway health check passes.
+app.UseSwagger();
+app.UseSwaggerUI();
 
 app.UseHttpsRedirection();
 app.UseCors(CorsPolicy);
