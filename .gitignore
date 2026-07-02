@@ -1,0 +1,13 @@
+# Backend
+backend/FinanceTracker.Api/appsettings.Development.json
+backend/FinanceTracker.Api/bin/
+backend/FinanceTracker.Api/obj/
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+
+# Misc
+.DS_Store
+Thumbs.db
+*.user
