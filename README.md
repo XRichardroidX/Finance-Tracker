@@ -8,8 +8,7 @@ A simple full-stack app for tracking personal expenses. Built as a learning proj
 
 ## Project files
 
-- `PROJECT_PLAN.md` — full spec: every screen, every function, every endpoint, explained in detail.
-- `CLAUDE.md` — rules for AI coding tools (Claude Code, Codex) working in this repo.
+- `PROJECT_PLAN.md` — full spec: every screen, every function, every endpoint.
 - `backend/` — ASP.NET Core Web API starter.
 - `frontend/` — React (Vite) starter.
 
