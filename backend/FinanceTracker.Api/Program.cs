@@ -27,6 +27,11 @@ if (!string.IsNullOrEmpty(databaseUrl) && (databaseUrl.StartsWith("postgres://")
     connectionString = $"Host={host};Port={port};Database={database};Username={username};Password={password};SSL Mode=Require;Trust Server Certificate=true;";
 }
 
+if (string.IsNullOrEmpty(connectionString))
+{
+    throw new InvalidOperationException("DATABASE CONNECTION ERROR: Connection string is empty. Please ensure the DATABASE_URL environment variable is set in your Railway service variables (e.g. DATABASE_URL = ${{Postgres.DATABASE_URL}}).");
+}
+
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(connectionString));
 
